@@ -9,6 +9,7 @@ import {
 } from '@typegoose/typegoose';
 import argon2 from 'argon2';
 import log from '../utils/logger';
+import crypto from 'crypto';
 
 export const privateFields = [
   'password',
@@ -51,7 +52,7 @@ export class User {
   @prop({ required: true })
   password: string;
 
-  @prop({ required: true ,default:()=>'67'})
+  @prop({ required: true, default: () => crypto.randomUUID() })
   verificationCode: string;
 
   @prop()

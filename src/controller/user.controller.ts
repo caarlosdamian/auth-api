@@ -14,7 +14,7 @@ export async function createUserHandler(
       from: 'text@example.com',
       to: user.email,
       subject: 'Please verify your account',
-      text: `Verification code ${user.verificationCode}. Id:: ${user.id}`,
+      text: `Verification code ${user.verificationCode}. Id: ${user.id}`,
     });
     return res.send('User succesfully created');
   } catch (error: any) {
