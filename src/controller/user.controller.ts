@@ -1,7 +1,17 @@
 import { Request, Response } from 'express';
-import { CreateUserInput, VerifyUserInput } from '../schema/user.schema';
-import { createUser, findUserById } from '../service/user.service';
+import {
+  CreateUserInput,
+  ForgotPasswordInput,
+  VerifyUserInput,
+} from '../schema/user.schema';
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+} from '../service/user.service';
 import sendEmail from '../utils/mailer';
+import log from '../utils/logger';
+import crypto from 'crypto';
 
 export async function createUserHandler(
   req: Request<{}, {}, CreateUserInput>,
@@ -30,7 +40,7 @@ export async function verifyUserHandler(
   res: Response
 ) {
   const id = req.params.id;
-  console.log(id)
+  console.log(id);
   const verificationCode = req.params.verificationCode;
   // find the user by id ;
   const user = await findUserById(id);
@@ -52,4 +62,31 @@ export async function verifyUserHandler(
   }
 
   return res.send('Could not verify user');
+}
+
+export async function forgotPasswordHandler(
+  req: Request<{}, {}, ForgotPasswordInput>,
+  res: Response
+) {
+  const message =
+    'If a user with that email is registered you will receive a password reset email';
+  const { email } = req.body;
+  const user = await findUserByEmail(email);
+  if (!user) {
+    log.debug(`User with email ${email} does not exists`);
+    return res.send(message);
+  }
+  if (!user.verified) return res.send('User is not verifed');
+  const passwordResetCode = crypto.randomUUID();
+  user.passwordResetCode = passwordResetCode;
+
+  await user.save();
+  await sendEmail({
+    to: user.email,
+    from: 'test@example.com',
+    subject: 'Reset your password',
+    text: `Password reset code: ${passwordResetCode}. Id:${user._id}`,
+  });
+  log.debug(`Password reset email sent to ${email}`);
+  return res.send(message);
 }
