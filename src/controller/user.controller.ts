@@ -116,3 +116,7 @@ export const resetPasswordHandler = async (
 
   return res.send('Successfully updated password');
 };
+
+export const getCurrentUserHandler = async (req: Request, res: Response) => {
+  return res.send(res.locals.user);
+};
