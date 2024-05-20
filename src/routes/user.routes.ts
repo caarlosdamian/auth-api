@@ -3,11 +3,13 @@ import validateResourse from '../middleware/calidateResourse';
 import {
   createUserschema,
   forgotPasswordSchema,
+  resetPasswordSchema,
   verifyUserSchema,
 } from '../schema/user.schema';
 import {
   createUserHandler,
   forgotPasswordHandler,
+  resetPasswordHandler,
   verifyUserHandler,
 } from '../controller/user.controller';
 
@@ -23,6 +25,11 @@ router.post(
   '/forgotpassword',
   validateResourse(forgotPasswordSchema),
   forgotPasswordHandler
+);
+router.post(
+  '/resetpassword/:id/:passwordResetCode',
+  validateResourse(resetPasswordSchema),
+  resetPasswordHandler
 );
 
 export default router;

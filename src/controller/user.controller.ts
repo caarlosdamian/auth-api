@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import {
   CreateUserInput,
   ForgotPasswordInput,
+  ResetPasswordInput,
   VerifyUserInput,
 } from '../schema/user.schema';
 import {
@@ -13,10 +14,10 @@ import sendEmail from '../utils/mailer';
 import log from '../utils/logger';
 import crypto from 'crypto';
 
-export async function createUserHandler(
+export const createUserHandler = async (
   req: Request<{}, {}, CreateUserInput>,
   res: Response
-) {
+) => {
   const body = req.body;
   try {
     const user = await createUser(body);
@@ -33,12 +34,12 @@ export async function createUserHandler(
     }
     return res.status(500).send(error);
   }
-}
+};
 
-export async function verifyUserHandler(
+export const verifyUserHandler = async (
   req: Request<VerifyUserInput>,
   res: Response
-) {
+) => {
   const id = req.params.id;
   console.log(id);
   const verificationCode = req.params.verificationCode;
@@ -62,12 +63,12 @@ export async function verifyUserHandler(
   }
 
   return res.send('Could not verify user');
-}
+};
 
-export async function forgotPasswordHandler(
+export const forgotPasswordHandler = async (
   req: Request<{}, {}, ForgotPasswordInput>,
   res: Response
-) {
+) => {
   const message =
     'If a user with that email is registered you will receive a password reset email';
   const { email } = req.body;
@@ -89,4 +90,29 @@ export async function forgotPasswordHandler(
   });
   log.debug(`Password reset email sent to ${email}`);
   return res.send(message);
-}
+};
+
+export const resetPasswordHandler = async (
+  req: Request<ResetPasswordInput['params'], {}, ResetPasswordInput['body']>,
+  res: Response
+) => {
+  const { id, passwordResetCode } = req.params;
+  const { password } = req.body;
+
+  const user = await findUserById(id);
+
+  if (
+    !user ||
+    !user.passwordResetCode ||
+    user.passwordResetCode !== passwordResetCode
+  ) {
+    return res.status(400).send('Could not reset user password');
+  }
+
+  user.passwordResetCode = null;
+  user.password = password;
+
+  await user.save();
+
+  return res.send('Successfully updated password');
+};
